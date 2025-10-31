@@ -1,0 +1,9 @@
+#!/bin/bash
+# Simple wrapper for refugee_case_analyzer.py using uv
+
+# Change to script directory
+cd "$(dirname "$0")"
+
+# Run with uv
+exec uv run python src/refugee_case_analyzer.py "$@"
+

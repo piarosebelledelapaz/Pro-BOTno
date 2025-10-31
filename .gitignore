@@ -1,0 +1,8 @@
+src/vector_db_data/*
+src/cases/*
+**/__pycache__/*
+**/*.pyc
+examples/*
+**/.DS_Store
+.idea/*
+.idea

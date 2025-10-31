@@ -3,3 +3,8 @@ langchain_huggingface
 langchain-openai
 streamlit
 sentence-transformers
+SPARQLWrapper
+requests
+openai
+reportlab
+PyPDF2

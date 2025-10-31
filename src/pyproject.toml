@@ -1,0 +1,16 @@
+[project]
+name = "src"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain-chroma>=1.0.0",
+    "langchain-huggingface>=1.0.0",
+    "langchain-openai>=1.0.1",
+    "sentence-transformers>=5.1.2",
+    "sparqlwrapper>=2.0.0",
+]
+
+[tool.uv.extra-build-dependencies]
+pro-botno = ["setuptools.build_backend"]

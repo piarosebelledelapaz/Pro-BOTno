@@ -1,0 +1,28 @@
+[project]
+name = "pro-botno"
+version = "0.1.0"
+description = "UNHCR Pro Bono Legal Assistant with Fedlex SPARQL integration"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "langchain_chroma",
+    "langchain_huggingface",
+    "langchain-openai",
+    "streamlit",
+    "sentence-transformers",
+    "SPARQLWrapper",
+    "requests",
+    "reportlab>=4.4.4",
+    "pypdf2>=3.0.1",
+]
+
+[project.scripts]
+refugee-analyzer = "refugee_case_analyzer:main"
+
+[tool.uv.workspace]
+members = [
+    "src",
+]
+
+[tool.uv.extra-build-dependencies]
+pro-botno = ["setuptools.build_backend"]
