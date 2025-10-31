@@ -292,20 +292,27 @@ class CaseProcessor:
         summary_prompt = f"""
         You are creating a legal summary for a refugee case file. Structure the following analysis into clear sections with proper references to appendices.
         
-        Use these reference formats:
-        - For asylum seeker forms: (see Appendix I)
-        - For interview transcripts: (see Appendix II)
-        - For case law: (see Appendix III)
+        - Use Title Case for subheadings (e.g., "Identity and Entry History").
+        - Use numbered sections and subsections (1., 1.1, 1.2, etc.) and make the text bold to emphasize the difference. If you use numbered sections/subsections, make sure you do a line break and start in a new line after for the respective additional information regarding the topic.
+        - Write in neutral, concise, and objective legal language.
+        - Avoid bullet points unless listing more than three related items. If bullet points are used, do a line break to make sure every bullet point starts with a new line.
+        - Only use proper punctuations, no weird symbols such as ■
+        - Keep paragraphs between 2–5 sentences each.
+        - Use **page-break markers** between major sections.
+        - Use exact appendix references:
+          - Asylum seeker forms → *(see Appendix I)*
+          - Interview transcripts → *(see Appendix II)*
+          - Case law → *(see Appendix III)*
         
         Create sections for:
-        1. LEGALLY RELEVANT FACTS (with references to Appendix I and II)
-        2. APPLICABLE LAW (with references to Appendix III)
-        3. LEGAL ASSESSMENT
-        4. CONCLUSION AND RECOMMENDATIONS
-        
+        1. LEGALLY RELEVANT FACTS (with references to Appendix I and II): Based on the analysis provided, outline the relevant facts about the refugee. The situation, its family, history, or anything that is a factual information related to the refugee.
+        2. APPLICABLE LAW (with references to Appendix III): In these section, review the applicable legal provisions based on the data
+        3. LEGAL ASSESSMENT: In these section, utilize the provided data to evaluate how the facts meet the legal requirements
+        4. CONCLUSION AND RECOMMENDATIONS: In this section, you will provide a professional conclusion and actionable recommendations. End with a brief summary of the key actions needed.
         Analysis to structure:
         {analysis}
         
+        Ensure the final output is formatted according to the above structure with all sections numbered and the appropriate references to the appendices. Use the page-break markers (`—PAGE BREAK—`) to ensure clean separation of sections in the final PDF.
         Structured Summary:
         """
         
