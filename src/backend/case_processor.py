@@ -360,4 +360,74 @@ class CaseProcessor:
                     questions.append(question)
         
         return questions
+    
+    def extract_case_summary_from_chat(
+        self,
+        chat_history: List[Dict[str, str]],
+        transcription: str
+    ) -> Dict[str, str]:
+        """
+        Extract overview and family composition from chat history and transcription
+        
+        Args:
+            chat_history: List of chat messages
+            transcription: Interview transcription
+            
+        Returns:
+            Dictionary with 'overview' and 'family_composition'
+        """
+        if not chat_history:
+            return {
+                "overview": "No additional information provided during assessment.",
+                "family_composition": "See interview transcript in Appendix II."
+            }
+        
+        # Build chat text
+        chat_text = "\n".join([
+            f"{'Lawyer' if msg['role'] == 'user' else 'AI'}: {msg['content']}"
+            for msg in chat_history
+        ])
+        
+        extraction_prompt = f"""
+        Based on the interview transcript and follow-up Q&A session, extract:
+        1. A brief overview of the asylum seeker's situation (2-3 sentences)
+        2. Family composition (who they are traveling with, dependents, family members)
+        
+        Interview Transcript:
+        {transcription[:1000]}...
+        
+        Follow-up Q&A:
+        {chat_text}
+        
+        Provide your response in this exact format:
+        OVERVIEW:
+        [2-3 sentence overview]
+        
+        FAMILY_COMPOSITION:
+        [family composition details]
+        
+        If information is not available, write "Information not provided."
+        """
+        
+        chain = self.llm | StrOutputParser()
+        response = chain.invoke(extraction_prompt)
+        
+        # Parse the response
+        overview = "Information not provided."
+        family_composition = "Information not provided."
+        
+        if "OVERVIEW:" in response and "FAMILY_COMPOSITION:" in response:
+            parts = response.split("FAMILY_COMPOSITION:")
+            overview_part = parts[0].replace("OVERVIEW:", "").strip()
+            family_part = parts[1].strip()
+            
+            if overview_part and overview_part != "Information not provided.":
+                overview = overview_part
+            if family_part and family_part != "Information not provided.":
+                family_composition = family_part
+        
+        return {
+            "overview": overview,
+            "family_composition": family_composition
+        }
 

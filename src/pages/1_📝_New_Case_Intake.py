@@ -430,6 +430,12 @@ elif st.session_state.step == 4:
             
             st.session_state.case_data["legal_analysis"] = legal_analysis
             
+            # Extract case summary from chat history
+            case_summary_info = processor.extract_case_summary_from_chat(
+                st.session_state.chat_history,
+                st.session_state.case_data["translation"]
+            )
+            
             # Generate PDF report
             pdf_generator = PDFReportGenerator()
             
@@ -442,8 +448,8 @@ elif st.session_state.step == 4:
                     "UNHCR Number": st.session_state.case_data["unhcr_number"],
                     "Name": st.session_state.case_data["name"]
                 },
-                "overview": st.session_state.case_data.get("additional_context", ""),
-                "family_composition": "See interview transcript in Appendix II"
+                "overview": case_summary_info["overview"],
+                "family_composition": case_summary_info["family_composition"]
             }
             
             pdf_generator.generate_report(

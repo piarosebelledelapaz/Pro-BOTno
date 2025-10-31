@@ -6,6 +6,7 @@ Generates comprehensive legal reports with appendices for lawyers
 import os
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+from xml.sax.saxutils import escape
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -24,6 +25,63 @@ class PDFReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
+    
+    def _escape_text(self, text: str) -> str:
+        """
+        Convert markdown to HTML and escape text for ReportLab Paragraph.
+        
+        ReportLab Paragraph uses HTML-like markup:
+        - <b>text</b> for bold
+        - <i>text</i> for italic
+        - <u>text</u> for underline
+        
+        This function:
+        1. Converts markdown syntax to HTML
+        2. Escapes special characters
+        3. Preserves HTML tags
+        """
+        if not text:
+            return ""
+        
+        # Replace problematic dash characters with standard hyphen
+        text = text.replace('–', '-').replace('—', '-').replace('−', '-')
+        
+        # Convert markdown to HTML BEFORE escaping
+        # Bold: **text** -> <b>text</b>
+        import re
+        text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+        
+        # Italic: *text* (but not ** which we already handled)
+        # Use negative lookbehind/lookahead to avoid matching **
+        text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
+        
+        # Now escape HTML special characters EXCEPT our tags
+        # Split by tags, escape content between tags
+        parts = re.split(r'(<[^>]+>)', text)
+        escaped_parts = []
+        for part in parts:
+            if part.startswith('<') and part.endswith('>'):
+                # Keep HTML tags as-is
+                escaped_parts.append(part)
+            else:
+                # Escape content
+                escaped_parts.append(escape(part))
+        text = ''.join(escaped_parts)
+        
+        # Convert markdown-style bullets to HTML bullets
+        lines = text.split('\n')
+        converted_lines = []
+        for line in lines:
+            stripped = line.lstrip()
+            # Check if line starts with markdown bullet
+            if stripped.startswith('- ') or stripped.startswith('• '):
+                # Remove the bullet and add bullet point
+                content = stripped[2:].strip()
+                converted_lines.append(f"• {content}")
+            else:
+                converted_lines.append(line)
+        
+        return '\n'.join(converted_lines)
     
     def _setup_custom_styles(self):
         """Setup custom paragraph styles"""
@@ -223,7 +281,7 @@ class PDFReportGenerator:
         # Overview of Situation
         elements.append(Paragraph("Overview of Situation", self.styles['SubsectionHeading']))
         overview = case_data.get("overview", "Case overview not provided.")
-        elements.append(Paragraph(overview, self.styles['BodyJustify']))
+        elements.append(Paragraph(self._escape_text(overview), self.styles['BodyJustify']))
         
         elements.append(Spacer(1, 12))
         
@@ -231,7 +289,7 @@ class PDFReportGenerator:
         if case_data.get("family_composition"):
             elements.append(Paragraph("Family Composition", self.styles['SubsectionHeading']))
             elements.append(Paragraph(
-                case_data["family_composition"],
+                self._escape_text(case_data["family_composition"]),
                 self.styles['BodyJustify']
             ))
         
@@ -261,12 +319,12 @@ class PDFReportGenerator:
                 # Check if it's a heading
                 if para.strip().isupper() or para.strip().startswith('#'):
                     elements.append(Paragraph(
-                        para.strip().lstrip('#').strip(),
+                        self._escape_text(para.strip().lstrip('#').strip()),
                         self.styles['SubsectionHeading']
                     ))
                 else:
                     elements.append(Paragraph(
-                        para.strip(),
+                        self._escape_text(para.strip()),
                         self.styles['BodyJustify']
                     ))
         
@@ -289,9 +347,12 @@ class PDFReportGenerator:
             ))
             
             for doc in general_docs:
-                ref_text = f"<b>{doc.get('reference', '')}</b> {doc.get('title', '')}"
+                ref = self._escape_text(doc.get('reference', ''))
+                title = self._escape_text(doc.get('title', ''))
+                ref_text = f"<b>{ref}</b> {title}"
                 if doc.get('path'):
-                    ref_text += f"<br/><i>Source: {doc['path']}</i>"
+                    path = self._escape_text(doc['path'])
+                    ref_text += f"<br/><i>Source: {path}</i>"
                 
                 elements.append(Paragraph(ref_text, self.styles['Reference']))
         
@@ -303,12 +364,13 @@ class PDFReportGenerator:
             ))
             
             for law in swiss_laws:
-                ref_text = f"<b>{law.get('reference', '')}</b> {law.get('title', '')}"
-                if law.get('sr_number'):
-                    ref_text += f" (SR {law['sr_number']})"
-                if law.get('link'):
-                    ref_text += f"<br/><i>Link: <font color='blue'>{law['link']}</font></i>"
-                
+                ref = self._escape_text(law.get('reference', ''))
+                title = self._escape_text(law.get('title', ''))
+                sr_num = self._escape_text(law.get('sr_number', ''))
+                ref_text = f"<b>{ref}</b> {title}"
+                if sr_num:
+                    ref_text += f" (SR {sr_num})"
+                # Note: Links available in Appendix III
                 elements.append(Paragraph(ref_text, self.styles['Reference']))
         
         return elements
@@ -348,7 +410,7 @@ class PDFReportGenerator:
             # Split into manageable chunks
             for para in forms_text.split('\n\n'):
                 if para.strip():
-                    elements.append(Paragraph(para.strip(), self.styles['BodyJustify']))
+                    elements.append(Paragraph(self._escape_text(para.strip()), self.styles['BodyJustify']))
         
         return elements
     
@@ -371,7 +433,7 @@ class PDFReportGenerator:
         # Format transcript
         for para in transcription.split('\n\n'):
             if para.strip():
-                elements.append(Paragraph(para.strip(), self.styles['BodyJustify']))
+                elements.append(Paragraph(self._escape_text(para.strip()), self.styles['BodyJustify']))
         
         return elements
     
@@ -395,7 +457,7 @@ class PDFReportGenerator:
             
             for para in case_law.split('\n\n'):
                 if para.strip():
-                    elements.append(Paragraph(para.strip(), self.styles['BodyJustify']))
+                    elements.append(Paragraph(self._escape_text(para.strip()), self.styles['BodyJustify']))
         else:
             elements.append(Paragraph(
                 "No specific case law was cited in the analysis. "
@@ -413,17 +475,67 @@ class PDFReportGenerator:
             ))
             
             for i, doc in enumerate(legal_analysis["source_documents"][:5], 1):  # Limit to 5
+                source = self._escape_text(doc.get('source', 'Unknown'))
                 elements.append(Paragraph(
-                    f"<b>Document {i}:</b> {doc.get('source', 'Unknown')}",
+                    f"<b>Document {i}:</b> {source}",
                     self.styles['Reference']
                 ))
                 
-                # Add excerpt
-                content = doc.get('content', '')[:300]
+                # Add excerpt - properly escaped, showing original text
+                raw_content = doc.get('content', '')[:400]
+                content = self._escape_text(raw_content)
+                
+                # Display the excerpt with label
                 elements.append(Paragraph(
-                    f"<i>{content}...</i>",
+                    "<i>Excerpt:</i>",
                     self.styles['Reference']
                 ))
+                elements.append(Paragraph(
+                    f"{content}...",
+                    self.styles['Reference']
+                ))
+                
+                elements.append(Spacer(1, 6))
+        
+        # Swiss Federal Legislation Links
+        bibliography = legal_analysis.get("bibliography", [])
+        swiss_laws = [b for b in bibliography if b.get("type") == "Swiss Federal Legislation" and b.get("link")]
+        
+        if swiss_laws:
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(
+                "Swiss Federal Legislation Links",
+                self.styles['SubsectionHeading']
+            ))
+            
+            elements.append(Paragraph(
+                "<i>Note: Swiss federal legislation is available in German, French, Italian, and Romansh. "
+                "Links below provide access to all language versions.</i>",
+                self.styles['BodyText']
+            ))
+            elements.append(Spacer(1, 6))
+            
+            for law in swiss_laws:
+                ref_num = self._escape_text(law.get('reference', ''))
+                title = self._escape_text(law.get('title', 'Unknown'))
+                sr_num = self._escape_text(law.get('sr_number', ''))
+                link = self._escape_text(law.get('link', ''))
+                
+                # Format: [L1] Title (SR X.XXX)
+                # Available at: https://...
+                ref_text = f"<b>{ref_num}</b> {title}"
+                if sr_num:
+                    ref_text += f" (SR {sr_num})"
+                
+                elements.append(Paragraph(ref_text, self.styles['Reference']))
+                
+                if link:
+                    # Add link on separate line, not clickable but copyable
+                    elements.append(Paragraph(
+                        f"<i>Available at: {link}</i>",
+                        self.styles['Reference']
+                    ))
+                
                 elements.append(Spacer(1, 6))
         
         return elements
