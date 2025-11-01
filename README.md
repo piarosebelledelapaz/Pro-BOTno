@@ -4,6 +4,13 @@ An intelligent legal assistant for pro bono lawyers at UNHCR working with refuge
 - **General Legal Documents**: European and international legal documents via RAG (Retrieval-Augmented Generation)
 - **Swiss Federal Legislation**: Official Swiss laws from Fedlex with exact legal citations via SPARQL
 
+This project idea is made for the hackathon from the "Seminar: Digital  Platforms for Resilience Crisis" FS2025.
+We are Team 4 (Cache me if you can) and the members are the following:
+- Pia Rosebelle M. dela Paz
+- Yunyi Zhang
+- Solomon Haile Dereje
+
+
 ## 🚀 Quick Start
 
 ### Prerequisites
