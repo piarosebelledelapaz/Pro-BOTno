@@ -1,4 +1,4 @@
-# ⚖️ Pro-BOTno: An AI-powered UNHCR Pro-bono Legal Assistant for Refugees
+# ⚖️ Pro-BOTno: UNHCR Pro-bono Legal Assistant for Refugees
 
 An intelligent legal assistant for pro bono lawyers at UNHCR working with refugees. The system combines:
 - **General Legal Documents**: European and international legal documents via RAG (Retrieval-Augmented Generation)
